@@ -1,82 +1,78 @@
 <template>
-  <div id="app" ref="calculate">
-    <div class="item" v-for="input of inputs" :key="input.id">
-        <span>{{ input.operand }}</span>
-        <input type="text" :id="input.id" v-model="model[input.id]" @keydown="keyHandler">
-        <input v-if="result" type="text" readonly disabled v-model="result">
+  <div id="app">
+    <img alt="Vue logo" src="./assets/logo.png">
+    <h1>Rocket Vue Test</h1>
+    <div class="layout" ref="layout">
+      <calculate
+        v-model="item.result"
+        v-for="item of calculators"
+        :id="item.id"
+        :key="item.id"
+        @new="pressEnter"
+        @start="dragStart"
+        @over="dragOver"
+        @end="dragEnd"/>
+      <div v-if="dragging" class="calculate">
+        <input @dragover.prevent @drop="dragFinish" type="number" style="opacity: .5" readonly />
+      </div>
     </div>
-    {{ model }}
   </div>
 </template>
 
 <script>
+import Calculate from './components/Calculate'
 
 export default {
   name: 'app',
-  data: () => ({
-    model: {},
-    result: 0,
-    inputs: [{ id: Math.random(), operand: null }],
-    operations: {
-      '+': { keyCode: 187, keyCodeNum: 107 },
-      '-': { keyCode: 189, keyCodeNum: 109 },
-      '*': { keyCode: 56, keyCodeNum: 106 },
-      '/': { keyCode: 191, keyCodeNum: 111 }
-    }
-  }),
-  computed: {
-    isEmpty() {
-      return this.inputs.some(input => !this.model[input.id])
-    }
+  components: {
+    Calculate
   },
+  data: () => ({
+    calculators: [{ id: 1, result: null }],
+    dragging: false,
+    result: null
+  }),
   methods: {
-    keyHandler(e) {
-      if (e.keyCode === 8) {
-        if (this.isEmpty) {
-          delete this.model[this.inputs.pop().id];
-          setTimeout(() => {
-            this.$refs.calculate.lastElementChild.querySelector('input').focus();
-          })
-        }
-      }
-
-      for (const operand in this.operations) {
-        if (this.operations.hasOwnProperty(operand)) {
-          if ((e.keyCode === this.operations[operand].keyCode && e.shiftKey) || e.keyCode === this.operations[operand].keyCodeNum) {
-            e.preventDefault();
-            if (!this.isEmpty) {
-              const id = Math.random();
-              this.inputs.push({ id, operand });
-              setTimeout(() => {
-                this.$refs.calculate.lastElementChild.querySelector('input').focus();
-              })
-            }
-          }
-        }
-      }
-
-      // [...this.$refs.calculate.children].reduce((a, b) => {
-      //   const operand = b.querySelector('span');
-      //   if (operand.innerText === '+') {
-      //     this.result = this.addition(a.lastElementChild.value, b.lastElementChild.value)
-      //   }
-      // })
+    dragStart() {
+      this.dragging = true;
     },
-    addition(a, b) {
-      return a + b;
+    dragOver(result) {
+      this.result = result;
+    },
+    dragEnd() {
+      this.dragging = false;
+    },
+    dragFinish() {
+      this.calculators.push({ id: this.calculators.length + 1, result: this.result });
+      setTimeout(() => {
+        this.$refs.layout.lastElementChild.querySelector('input').focus()
+      })
+    },
+    pressEnter(result) {
+      this.calculators.push({ id: this.calculators.length + 1, result: result });
+      setTimeout(() => {
+        this.$refs.layout.lastElementChild.querySelector('input').focus()
+      })
     }
   }
 }
 </script>
 
 <style>
+body {
+  margin: 0;
+}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  width: 1440px;
+  margin: 60px auto
+}
+.layout {
   display: flex;
+  flex-direction: column;
 }
 </style>
